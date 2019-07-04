@@ -10,8 +10,6 @@ MacOSX and Linux
 ## Requirements
 
 - OpenLayers-2.13.1
-- lighttpd
-- mod_websocket
 - mongodb (option)
 
 ## goal
@@ -35,156 +33,20 @@ MacOSX and Linux
             | input somehow                       
             v      
          +------------+       +-----------+  Start Page  +---------+
-         | GPS DB     |       |           | <----------- |         |
-         |   CSV      |       |           | -----------> |         |
-         |   MongoDB  |       |  lighttpd |              |         |
-         |   etc...   |       |           | GET Start WS |         |
-         +------------+       |    +------|------------- |         |
-            A |               |    |      |              |         |
+         | GPS DB     |       |           | 65482        |         |
+         |   CSV      |       | relots.py | <----------> |         |
+         |   MongoDB  |       |           | -----------> |         |
+         |   etc...   |       |           |              |         |
+         +------------+       |           |              |         |
+            A |               |           |              |         |
     polling | | res.          +-----------+              | Browser |
-            | |                    |                     |         |
-            | V                    V                     |         |
-         +----------+         +-----------+              |         |
-         | GPS Data |         |    mod    | <===(WS)===> |         |
+            | |                     |                    |         |
+            | V                     v                    |         |
+         +----------+         +-----------+ 65483        |         |
+         | GPS Data |         |           | <===(WS)===> |         |
          |  Server  | ------> | websocket | -----------> |         |
          +----------+  Send   +-----------+     Send     +---------+
                      GPS data                 GPS data
-
-## mod websocket
-
-lighttpd の websocket module.
-
-https://github.com/nori0428/mod_websocket
-
-    % git clone --recursive git://github.com/nori0428/mod_websocket.git 
-
-### How to build mod_websocket
-
-    apt-get install -y autoconf libtool
-
-makeとか設定方法など。
-
-https://github.com/nori0428/mod_websocket/blob/master/INSTALL
-
-conrtib/lighttpd にあるバージョン以外を使う場合は lighttpd 1.4 のソースが必要になる。
-
-<s>makefile が mod_websocket 以下の一部にディレクトリを作るので、</s>
-<s>root で make install すると、後から一般ユーザで make できなくなる。</s>
-
-    % cd mod_websocket
-    % ./bootstrap
-    % ./configure --with-websocket=all --with-test
-    % make clean check
-    ============================================================================
-    Testsuite summary for mod_websocket 3.5
-    ============================================================================
-    # TOTAL: 4
-    # PASS:  4
-    # SKIP:  0
-    # XFAIL: 0
-    # FAIL:  0
-    # XPASS: 0
-    # ERROR: 0
-    ============================================================================
-
-    % ./configure --with-lighttpd=`pwd`/contrib/lighttpd1.4
-    % make install
-        :
-    Target Lighttpd version: lighttpd-1.4.46
-    do patch? [y/n]
-
-で y と答える。
-
-    % cd contrib/lighttpd1.4
-    % apt-get install -y libssl-dev libbz2-dev zlib1g-dev libpcre3-dev
-
-お好みで --prefix でディレクトリを変える。
-以降、BASEDIR で参照する。
-
-    e.g.
-    % BASEDIR=${HOME}/lorawan/local
-
-    % ./configure --with-websocket=all --with-openssl --prefix=${BASEDIR}
-    % make
-    % make install
-
-    % mkdir -p ${BASEDIR}/etc/lighttpd
-    % cp doc/config/lighttpd.conf ${BASEDIR}/etc/lighttpd/
-    % cp doc/config/modules.conf ${BASEDIR}/etc/lighttpd/
-    % cp -r doc/config/conf.d ${BASEDIR}/etc/lighttpd/
-
-起動に必要なディレクトリを作っておく。
-
-    % mkdir -p ${BASEDIR}/var/log/lighttpd
-    % mkdir -p ${BASEDIR}/var/run
-    % mkdir -p ${BASEDIR}/www
-
-### パッチがあたらないバージョンの場合
-
-    % git clone https://github.com/lighttpd/lighttpd1.4.git
-    % ./configure --with-lighttpd=`pwd`/lighttpd1.4
-    % make install
-        :
-    Target Lighttpd version: lighttpd-1.4.46
-    do patch? [y/n]
-
-で n と答えて、がんばって手で当ててから、lighttpd をmakeする。
-
-### lighttpd.conf
-
-ディレクトリを合わせる。
-websocket.server を設定する。
-XXX host は...
-
-    % vi lighttpd.conf
-    websocket.server = ( "/demo" => ( "host" => "127.0.0.1", "port" => 49001 ) )
-
-    --- lighttpd.conf.orig  2017-04-28 10:41:21.385166150 +0900
-    +++ lighttpd.conf       2017-04-28 10:46:18.913172134 +0900
-    @@ -13,11 +13,12 @@
-     ## if you add a variable here. Add the corresponding variable in the
-     ## chroot example aswell.
-     ##
-    -var.log_root    = "/var/log/lighttpd"
-    -var.server_root = "/srv/www"
-    -var.state_dir   = "/var/run"
-    -var.home_dir    = "/var/lib/lighttpd"
-    -var.conf_dir    = "/etc/lighttpd"
-    +var.base_dir    = "/home/takumori/lorawan/local"
-    +var.log_root    = base_dir + "/var/log/lighttpd"
-    +var.server_root = base_dir + "/www"
-    +var.state_dir   = base_dir + "/var/run"
-    +var.home_dir    = base_dir + "/lib/lighttpd"
-    +var.conf_dir    = base_dir + "/etc/lighttpd"
-     
-     ## 
-     ## run the server chrooted.
-    @@ -85,7 +86,7 @@
-     ##  Basic Configuration
-     ## ---------------------
-     ##
-    -server.port = 80
-    +server.port = 49002
-     
-     ##
-     ## Use IPv6?
-    @@ -446,3 +447,6 @@
-     #include_shell "cat /etc/lighttpd/vhosts.d/*.conf"
-     ##
-     #######################################################################
-    +
-    +websocket.server = ( "/demo" => ( "host" => "127.0.0.1", "port" => 49001 ) )
-    +
-
-### 起動
-
-    起動。/usr/local/lighttpd/sbin にインストールしている場合。
-
-    ${BASEDIR}/sbin/lighttpd -f ${BASEDIR}/etc/lighttpd/lighttpd.conf -D
-
-"-D" はバックグラウンドで起動*しない*。
-
-    > tcp6       0      0 :::49002       :::*        LISTEN
 
 ## sample data
 
