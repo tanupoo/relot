@@ -1,9 +1,10 @@
+var RELOT_FEED_PORT = 65483;
 var ws;
 var ol_map;
 var ol_markers;
 var epsg4326;
 var epsg900913;
-var zoom = 17; 
+var zoom = 16; 
 var lon_center = 0;
 var lat_center = 0;
 var mdb = {}; /* marker database. */
@@ -93,7 +94,8 @@ function marker_center(lon, lat)
 
 function ws_open()
 {
-  ws = new WebSocket("ws://127.0.0.1:49002/relot/feed");
+  var url = "ws://127.0.0.1:" + RELOT_FEED_PORT + "/";
+  ws = new WebSocket(url);
 
   ws.onopen = function(ev)
   {

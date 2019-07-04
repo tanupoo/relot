@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>Realtime GPS Tracking Demo</title>
-<link rel="stylesheet" type="text/css" href="relot.css">
-<script type="text/javascript" src="OpenLayers-2.13.1/OpenLayers.js"></script>
-<script type="text/javascript" src="relot.js"></script>
+    <meta charset="UTF-8">
+    <title>Realtime Location Tracking Demo</title>
+    <link rel="stylesheet" type="text/css" href="relot.css">
+    <script type="text/javascript" src="ol-2.13.1.js"></script>
+    <script type="text/javascript" src="relot.js"></script>
 </head>
 <body>
 <div id="div01">
-  <button id="btnStart" type="button">Start</button>
-  <button id="btnStop" type="button">Stop</button>
-  <input id="boxInterval" type="text" placeholder="Interval in seconds"></input>
-  <input id="boxClientID" type="text" placeholder="Client ID" readonly></input>
-  <input id="boxZoomLevel" type="text" placeholder="Zoom" readonly></input>
-  <textarea id="boxRes" cols="80" rows="1" readonly></textarea>
+    <button id="btnStart" type="button">Start</button>
+    <button id="btnStop" type="button">Stop</button>
+    <input id="boxInterval" type="text" placeholder="Interval in seconds" />
+    <input id="boxClientID" type="text" placeholder="Client ID" readonly />
+    <input id="boxZoomLevel" type="text" placeholder="Zoom" readonly />
+    <textarea id="boxRes" cols="80" rows="1" readonly></textarea>
 </div>
-<div id="basicMap"></div>
-<div id="debug"></div>
+<div id="basicMap" />
+<div id="debug" />
 </body>
 </html>
